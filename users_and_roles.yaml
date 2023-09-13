@@ -1,0 +1,71 @@
+User:
+  GENERAL_KHAN:
+    email: general_khan@china.com
+    phone: +860123456789
+  LT_GENERAL_PAWN:
+    email: lt_general_pawn@china.com
+    phone: +860987654321
+  POTUS:
+    email: potus@china.com
+    phone: +860111111111
+  ADMIN_JONES:
+    email: admin_jones@china.com
+    phone: +860222222222
+  ANALYST_SMITH:
+    email: analyst_smith@china.com
+    phone: +860333333333
+  REVIEWER_LEE:
+    email: reviewer_lee@china.com
+    phone: +860444444444
+  IT_JACKSON:
+    email: it_jackson@china.com
+    phone: +860555555555
+  MANAGER_WONG:
+    email: manager_wong@china.com
+    phone: +860666666666
+
+Role:
+  GENERAL_USER:
+    Users: ['GENERAL_KHAN']
+    Permissions:
+      - view_tasks
+      - complete_tasks
+  LT_GENERAL_USER:
+    Users: ['LT_GENERAL_PAWN']
+    Permissions:
+      - view_tasks
+      - complete_tasks
+      - reassign_tasks
+  PRESIDENT_USER:
+    Users: ['POTUS']
+    Permissions:
+      - view_tasks
+      - complete_tasks
+      - override_decisions
+  ADMIN:
+    Users: ['ADMIN_JONES']
+    Permissions:
+      - full_system_access
+  BUSINESS_ANALYST:
+    Users: ['ANALYST_SMITH']
+    Permissions:
+      - access_analytics
+      - view_dashboards
+      - generate_reports
+  REVIEWER:
+    Users: ['REVIEWER_LEE']
+    Permissions:
+      - review_processes
+      - access_audit_logs
+  IT_SUPPORT:
+    Users: ['IT_JACKSON']
+    Permissions:
+      - system_configuration
+      - handle_technical_issues
+      - integration_access
+  MANAGER:
+    Users: ['MANAGER_WONG']
+    Permissions:
+      - view_team_tasks
+      - reassign_tasks
+      - view_team_reports

@@ -1,0 +1,104 @@
+validations:
+  required_field:
+    regex: .+
+    description: Required Field Validation (at least one character)
+
+  length_validation:
+    regex: ^.{4,100}$
+    description: Length Validation (min to max characters)
+
+  numeric_validation:
+    regex: ^[0-9]+$
+    description: Numeric Validation (numbers only)
+
+  email_validation:
+    regex: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$
+    description: Email Validation
+
+  phone_number_validation:
+    regex: ^[0-9]+([-.\s]?[0-9]+)*$
+    description: Phone Number Validation
+
+  date_validation:
+    regex: ^\d{2}\/\d{2}\/\d{4}$
+    description: Date Validation (dd/mm/yyyy format)
+
+  password_validation:
+    regex: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&*!])[A-Za-z\d@#$%^&*!]{8,24}$
+    description: Password Validation (uppercase, lowercase, number, special character) 8 to 24 characters
+
+  username_validation:
+    regex: ^[a-zA-Z0-9_-]{4,24}$
+    description: Username Validation (alphanumeric, underscore, and hyphen) 4 to 24 characters
+
+  url_validation:
+    regex: ^(http|https)://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(/.*)?$
+    description: URL Validation
+
+  dropdown_selection_validation:
+    regex: .+
+    description: Dropdown Selection Validation (at least one character)
+
+  radio_checkbox_validation:
+    regex: .+
+    description: Radio Button/Checkbox Validation (at least one character)
+
+  file_upload_validation:
+    regex: .+
+    description: File Upload Validation (non-empty)
+
+  captcha_validation:
+    regex: .+
+    description: CAPTCHA Validation (non-empty)
+
+  unique_field_validation:
+    regex: .+
+    description: Unique Field Validation (non-empty)
+
+  consistency_validation:
+    regex: .+
+    description: Consistency Validation (non-empty)
+
+  credit_card_validation:
+    regex: ^[0-9]{13,16}$
+    description: Credit Card Validation (13-16 digits)
+
+  postal_code_validation:
+    regex: .+
+    description: Postal Code/ZIP Code Validation (non-empty)
+
+  custom_validation:
+    regex: .+
+    description: Custom Validation (non-empty)
+
+  cross_field_validation:
+    regex: .+
+    description: Cross-Field Validation (non-empty)
+
+  server_side_validation:
+    regex: .+
+    description: Server-Side Validation (non-empty)
+
+  sanitization:
+    regex: .+
+    description: Sanitization (non-empty)
+
+  regex_validation:
+    regex: .+
+    description: Regex Validation (non-empty)
+
+  geographical_validation:
+    regex: .+
+    description: Geographical Validation (non-empty)
+
+  language_character_set_validation:
+    regex: .+
+    description: Language or Character Set Validation (non-empty)
+
+  accessibility_validation:
+    regex: .+
+    description: Accessibility Validation (non-empty)
+
+  date_time_format_validation:
+    regex: .+
+    description: Date and Time Format Validation (non-empty)

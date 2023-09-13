@@ -1,0 +1,101 @@
+description: "Nuclear Strike Workflow"
+workflow:
+  start:
+    class: Start
+    id: 1
+    require_user_action: False
+    user: ['GENERAL_USER']
+    role: []
+    outputs:
+      - general
+  
+  general:
+    class: ExclusiveChoice
+    id: 2
+    require_user_action: True
+    user: ['GENERAL_USER']
+    role: []
+    inputs:
+      - Start
+    outputs:
+      - workflow_aborted
+      - president
+    conditions:
+      default:
+        workflow_aborted
+      proceed_to_president:        
+        operator: Equal
+        attribute: general_confirmation
+        value: True
+      workflow_aborted:
+        operator: Equal
+        attribute: general_confirmation
+        value: False
+
+  president:
+    class: ExclusiveChoice
+    id: 3
+    require_user_action: True
+    user: ['PRESIDENT_USER']
+    role: []
+    inputs:
+      - general
+    outputs:
+      - workflow_aborted
+      - nuclear_strike
+    conditions:
+      proceed_to_nuclear_strike:
+        operator: Equal
+        attribute: president_confirmation
+        value: True
+        next_status: nuclear_strike
+      abort:
+        operator: Equal
+        attribute: president_confirmation
+        value: False
+        next_status: workflow_aborted
+
+  nuclear_strike:
+    class: Simple
+    require_user_action: False
+    id: 4
+    inputs:
+      - president
+    outputs:
+      - api_call_nuclear_strike
+
+  api_call_nuclear_strike:
+    class: RESTCall
+    require_user_action: False
+    id: 5
+    inputs:
+      - president
+    outputs:
+      - stop
+
+  workflow_aborted:
+    class: Simple
+    require_user_action: False
+    id: 6
+    inputs:
+      - general
+      - president
+    outputs:
+      - stop
+
+  stop:
+    class: Stop
+
+# ExclusiveChoice - if/else output
+# RESTCall - call a service
+# EmailNotify - notify via email
+# SMSNotify
+# Cancel - cancels the workflow
+# MultiChoice - Multiple Choices multiple fields - all satisfied
+# MutexChoice - Multiple Choices multiple fields - atleast one satisfied
+# Start
+# Simple - single output (no conditions)
+# Equal, GreaterThan, LessThan, GreaterThanOrEqual, LessThanOrEqual, Contains, InList
+
+#-> Start -> Cancel -> Stop
+#-> Start -> Simple/ExclusiveChoice/RestCall/EmailNotify/SMSNotify/MultiChoice -> Stop
