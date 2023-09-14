@@ -9,7 +9,7 @@ data = {
     "required_field": "Sample Data",
     "length_validation": "12345",
     "numeric_validation": "12345",
-    "email_validation": "user@324234.com",
+    "email_validation": "user^.com",
     "phone_number_validation": "123-456-7890",
     "date_validation": "09/14/2023",
     "password_validation": "P@ssw0rd",

@@ -16,7 +16,7 @@
     "toggle_1": true,
     "radio_1": 4,
     "selectbox_1": "Option A",
-    "multiselect_1": ["Option C", "Option D"],
+    "multiselect_1": ["Option A","Option C", "Option D"],
     "slider_1": 69.0,
     "select_slider_1": "green",
     "text_input_1": "text input one",

@@ -1,12 +1,13 @@
 import yaml
+from approv.WorkflowStep import Start, Stop, Simple, RESTCall, ExclusiveChoice
 
 class Workflow:
-    def __init__(self, config):
+    def __init__(self, config, form_data):
         self.config = config
-        self.current_status = "start"
-        self.form_data = {"audit": []}
+        self.current_status = 'start' if form_data['status'] == '' else form_data['status']
+        self.form_data = form_data
         
-    def process_workflow(self, form_data):
+    def process_workflow(self, form_data, action):
         step_config = self.config['workflow'][self.current_status]
         step_class = step_config['class']
         
@@ -65,7 +66,19 @@ class Workflow:
 
         step_class = step_config['class']
         step = globals()[step_class](step_config)
-        
+        self.current_status, decision = step.process(form_data)
+        form_data['status'] = self.current_status
+
+        return form_data
+    
+    def check_user_permission(self, step_config, user_role):
+        if 'role' in step_config and step_config['role'] and user_role not in step_config['role']:
+            return False
+        return True
+
+
+"""
+
         # Updated to use the evaluate_condition function for conditions
         for condition_name, condition in self.config['conditions'].items():
             operator = condition['operator']
@@ -80,4 +93,5 @@ class Workflow:
         # If none of the conditions are met, return the default
         self.current_status, decision = step.process(form_data)
         form_data['audit'].append(decision)
-        return form_data
+        
+"""

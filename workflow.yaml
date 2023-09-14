@@ -27,10 +27,12 @@ workflow:
         operator: Equal
         attribute: general_confirmation
         value: True
+        next_status: president
       workflow_aborted:
         operator: Equal
         attribute: general_confirmation
         value: False
+        next_status: workflow_aborted
 
   president:
     class: ExclusiveChoice
@@ -49,6 +51,7 @@ workflow:
         attribute: president_confirmation
         value: True
         next_status: nuclear_strike
+        
       abort:
         operator: Equal
         attribute: president_confirmation
