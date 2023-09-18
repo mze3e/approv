@@ -8,8 +8,8 @@ form:
       title: 'Audit Information'
       type: 'dataframe'
       editable: false
-      columns: {'id': 'int64', 'action': 'string', 'time': 'datetime64[ns]', 'user': 'string'}
-      auto_increment: ['id']
+      #columns: {'id': 'int64', 'action': 'string', 'time': 'datetime64[ns]', 'user': 'string'}
+      #auto_increment: ['id']
     comments:
       title: 'Comments'
       type: 'text_area'
@@ -19,9 +19,6 @@ form:
     president_confirmation:
       title: 'President'
       type: 'toggle'
-    file_uploader_1:
-      title: 'File Uploader 1'
-      type: 'file_uploader'
   actions: #to come from workflow
     save:
       title: "Save"

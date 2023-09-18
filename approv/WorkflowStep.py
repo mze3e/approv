@@ -44,12 +44,12 @@ class ExclusiveChoice:
         self.config = config
         
     def process(self, form_data):
-        print("ExclusiveChoice Config: ", self.config)
-        print("FormData: ", form_data)
+        #print("ExclusiveChoice Config: ", self.config)
+        #print("FormData: ", form_data)
         for condition_name, condition in self.config['conditions'].items():
             if condition_name != "default":
-                print("\n\n\ncondition_name: ", condition_name)
-                print("condition: ", condition)
+                #print("\n\n\ncondition_name: ", condition_name)
+                #print("condition: ", condition)
                 operator = condition['operator']
                 attribute = condition['attribute']
                 value = condition['value']

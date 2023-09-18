@@ -13,7 +13,7 @@ workflow:
     class: ExclusiveChoice
     id: 2
     require_user_action: True
-    user: ['GENERAL_USER']
+    user: []
     role: []
     inputs:
       - Start
@@ -38,7 +38,7 @@ workflow:
     class: ExclusiveChoice
     id: 3
     require_user_action: True
-    user: ['PRESIDENT_USER']
+    user: []
     role: []
     inputs:
       - general
@@ -88,6 +88,8 @@ workflow:
 
   stop:
     class: Stop
+    id: 8888
+    require_user_action: False
 
 # ExclusiveChoice - if/else output
 # RESTCall - call a service
