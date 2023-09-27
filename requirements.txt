@@ -1,2 +1,3 @@
 PyYAML
 duckdb
+streamlit_agraph
