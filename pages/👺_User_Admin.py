@@ -3,40 +3,63 @@ import pandas as pd
 import yaml
 
 
-with open('users_and_roles.yaml', 'r') as f:
-    data = yaml.safe_load(f.read())
+# with open('users_and_roles.yaml', 'r') as f:
+#     data = yaml.safe_load(f.read())
+
+import duckdb
+# create a connection to a file called 'file.db'
+
+import duckdb
+# create a connection to a file called 'file.db'
+
+def ddql(sql):
+    con = duckdb.connect('bpms.db')
+    try:
+        return con.sql(sql).df().copy()
+    except Exception as e:
+        return con.sql(sql)
+    finally:
+        con.close()
+
+query = st.text_input("Query")
+if st.button("Execute"):
+    st.dataframe(ddql(query))
 
 # Display Users Table
 st.subheader("Users")
-users_df = pd.DataFrame(data["User"]).T
+#users_df = pd.DataFrame(data["User"])
+users_df = ddql("select * from users")
 st.table(users_df)
 
 # Display Roles Table
 st.subheader("Roles")
-roles_df = pd.DataFrame({
-    'Role': list(data["Role"].keys()),
-    'Users': [', '.join(role_data["Users"]) for role_data in data["Role"].values()],
-    'Permissions': [', '.join(role_data.get("Permissions", [])) for role_data in data["Role"].values()]
-})
+# roles_df = pd.DataFrame({
+#     'Role': list(data["Role"].keys()),
+#     'Users': [', '.join(role_data["Users"]) for role_data in data["Role"].values()],
+#     'Permissions': [', '.join(role_data.get("Permissions", [])) for role_data in data["Role"].values()]
+# })
+roles_df = ddql("select * from roles")
 st.table(roles_df)
 
 # Parsing Permissions, Roles, and Users
 permissions_mapping = {}
-for role, role_data in data["Role"].items():
-    for permission in role_data.get("Permissions", []):
-        if permission not in permissions_mapping:
-            permissions_mapping[permission] = {'roles': [], 'users': []}
-        permissions_mapping[permission]['roles'].append(role)
-        for user in role_data["Users"]:
-            if user not in permissions_mapping[permission]['users']:
-                permissions_mapping[permission]['users'].append(user)
+# for role, role_data in data["Role"].items():
+#     for permission in role_data.get("Permissions", []):
+#         if permission not in permissions_mapping:
+#             permissions_mapping[permission] = {'roles': [], 'users': []}
+#         permissions_mapping[permission]['roles'].append(role)
+#         for user in role_data["Users"]:
+#             if user not in permissions_mapping[permission]['users']:
+#                 permissions_mapping[permission]['users'].append(user)
 
 # Construct DataFrame for Permissions Display
-permissions_df = pd.DataFrame({
-    'Permission': list(permissions_mapping.keys()),
-    'Roles': [', '.join(info['roles']) for info in permissions_mapping.values()],
-    'Users': [', '.join(info['users']) for info in permissions_mapping.values()]
-})
+# permissions_df = pd.DataFrame({
+#     'Permission': list(permissions_mapping.keys()),
+#     'Roles': [', '.join(info['roles']) for info in permissions_mapping.values()],
+#     'Users': [', '.join(info['users']) for info in permissions_mapping.values()]
+# })
+
+permissions_df = ddql("select * from permissions")
 
 # Display Permissions Table
 st.subheader("Permissions")
@@ -108,3 +131,5 @@ with st.form("permission_form"):
             st.success(f"Added permission {permission_name}")
         else:
             st.warning(f"{permission_name} already exists!")
+
+con.close()

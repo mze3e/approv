@@ -18,9 +18,11 @@ class Workflow:
         self.st = st
         if 'audit' not in st.session_state:
             st.session_state['audit'] = []
+            self.audit_data = st.session_state.audit
+        else:
+            self.audit_data = st.session_state.audit
 
         self.form = Form(self.st, self.form_config, self.audit_data)
-
 
     def audit(self, action, user, description=""):
         new_audit = {'status': self.current_status, 'action': action, 'description': description, 'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'), 'user': user}
