@@ -1,12 +1,9 @@
 PyYAML
 duckdb
-streamlit_agraph
-streamlit
 pandas
 SpiffWorkflow
-duckdb
-pandas
-PyYAML
-SpiffWorkflow
+shiny
+htmltools
+# Legacy Streamlit dependencies (keeping for transition period)
 streamlit
 streamlit_agraph
