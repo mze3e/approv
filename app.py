@@ -90,20 +90,99 @@ app_ui = ui.page_navbar(
     ui.nav_panel("User Admin",
         ui.div(
             ui.h1("User Administration"),
-            ui.input_text("sql_query", "SQL Query:", placeholder="Enter read-only SQL query (SELECT, SHOW, DESCRIBE, EXPLAIN)..."),
-            ui.input_action_button("execute_query", "Execute", class_="btn btn-secondary"),
-            ui.br(),
-            ui.output_text("query_error_display"),
-            ui.output_data_frame("query_results"),
-            ui.br(),
-            ui.h3("Users"),
-            ui.output_data_frame("users_table"),
-            ui.br(),
-            ui.h3("Roles"),
-            ui.output_data_frame("roles_table"),
-            ui.br(),
-            ui.h3("Permissions"),
-            ui.output_data_frame("permissions_table")
+            # User Management Section
+            ui.div(
+                ui.h2("User Management"),
+                ui.row(
+                    ui.column(8,
+                        ui.output_data_frame("users_table_display")
+                    ),
+                    ui.column(4,
+                        ui.div(
+                            ui.h4("User Details"),
+                            ui.input_selectize("selected_user", "Select User:", choices={}, selected=None),
+                            ui.input_text("user_username", "Username:", placeholder="Enter username"),
+                            ui.input_text("user_email", "Email:", placeholder="Enter email address"),
+                            ui.input_text("user_phone", "Phone:", placeholder="Enter phone number"),
+                            ui.input_checkbox("user_is_active", "Active User", value=True),
+                            ui.br(),
+                            ui.input_action_button("add_new_user", "Add New User", class_="btn btn-success"),
+                            ui.input_action_button("update_user", "Update User", class_="btn btn-primary"),
+                            ui.input_action_button("delete_user", "Delete User", class_="btn btn-danger"),
+                            ui.br(), ui.br(),
+                            ui.h5("User Roles"),
+                            ui.output_ui("user_roles_display"),
+                            ui.input_selectize("assign_role_to_user", "Assign Role:", choices={}, selected=None),
+                            ui.input_action_button("assign_role", "Assign Role", class_="btn btn-info"),
+                            ui.input_action_button("remove_user_role", "Remove Role", class_="btn btn-warning")
+                        )
+                    )
+                )
+            ),
+            ui.hr(),
+            # Role Management Section  
+            ui.div(
+                ui.h2("Role Management"),
+                ui.row(
+                    ui.column(8,
+                        ui.output_data_frame("roles_table_display")
+                    ),
+                    ui.column(4,
+                        ui.div(
+                            ui.h4("Role Details"),
+                            ui.input_selectize("selected_role", "Select Role:", choices={}, selected=None),
+                            ui.input_text("role_name", "Role Name:", placeholder="Enter role name"),
+                            ui.input_text_area("role_description", "Description:", placeholder="Enter role description"),
+                            ui.input_checkbox("role_is_active", "Active Role", value=True),
+                            ui.br(),
+                            ui.input_action_button("add_new_role", "Add New Role", class_="btn btn-success"),
+                            ui.input_action_button("update_role", "Update Role", class_="btn btn-primary"),
+                            ui.input_action_button("delete_role", "Delete Role", class_="btn btn-danger"),
+                            ui.br(), ui.br(),
+                            ui.h5("Role Permissions"),
+                            ui.output_ui("role_permissions_display"),
+                            ui.input_selectize("assign_permission_to_role", "Assign Permission:", choices={}, selected=None),
+                            ui.input_action_button("assign_permission", "Assign Permission", class_="btn btn-info"),
+                            ui.input_action_button("remove_role_permission", "Remove Permission", class_="btn btn-warning")
+                        )
+                    )
+                )
+            ),
+            ui.hr(),
+            # Permission Management Section
+            ui.div(
+                ui.h2("Permission Management"),
+                ui.row(
+                    ui.column(8,
+                        ui.output_data_frame("permissions_table_display")
+                    ),
+                    ui.column(4,
+                        ui.div(
+                            ui.h4("Permission Details"),
+                            ui.input_selectize("selected_permission", "Select Permission:", choices={}, selected=None),
+                            ui.input_text("permission_name", "Permission Name:", placeholder="Enter permission name"),
+                            ui.input_text_area("permission_description", "Description:", placeholder="Enter permission description"),
+                            ui.input_checkbox("permission_is_active", "Active Permission", value=True),
+                            ui.br(),
+                            ui.input_action_button("add_new_permission", "Add New Permission", class_="btn btn-success"),
+                            ui.input_action_button("update_permission", "Update Permission", class_="btn btn-primary"),
+                            ui.input_action_button("delete_permission", "Delete Permission", class_="btn btn-danger")
+                        )
+                    )
+                )
+            ),
+            ui.hr(),
+            # System Status & SQL Console
+            ui.div(
+                ui.h3("System Administration"),
+                ui.output_text("user_admin_status_display"),
+                ui.br(),
+                ui.h4("SQL Console (Read-Only)"),
+                ui.input_text("sql_query", "SQL Query:", placeholder="Enter read-only SQL query (SELECT, SHOW, DESCRIBE, EXPLAIN)..."),
+                ui.input_action_button("execute_query", "Execute", class_="btn btn-secondary"),
+                ui.output_text("query_error_display"),
+                ui.output_data_frame("query_results")
+            )
         )
     ),
     title="BPMS - Shiny Version",
@@ -323,9 +402,753 @@ def server(input, output, session):
         except Exception:
             return pd.DataFrame(columns=['permission_name', 'description'])
     
+    # ==============================================================
+    # USER ADMIN: ENTERPRISE-GRADE CRUD OPERATIONS & DATA MANAGEMENT
+    # ==============================================================
+    
+    # Helper functions for User Admin database operations
+    def execute_user_admin_query(query, params=None):
+        """Execute user admin queries with proper error handling"""
+        try:
+            # SECURITY: For now using basic query execution
+            # TODO: Implement parameterized queries to prevent SQL injection
+            result = db_manager.execute_query(query)
+            # Trigger UI refresh after any mutation
+            if any(keyword in query.upper() for keyword in ['INSERT', 'UPDATE', 'DELETE']):
+                data_refresh_counter.set(data_refresh_counter() + 1)
+            return result
+        except Exception as e:
+            user_admin_status.set(f"Database error: {str(e)}")
+            return pd.DataFrame()
+    
+    def load_users_data():
+        """Load comprehensive users data with role information"""
+        query = """
+        SELECT u.user_id, u.username, u.email, u.phone, u.is_active,
+               STRING_AGG(r.role_name, ', ') as roles,
+               u.created_at, u.updated_at
+        FROM users u
+        LEFT JOIN user_roles ur ON u.user_id = ur.user_id
+        LEFT JOIN roles r ON ur.role_id = r.role_id
+        GROUP BY u.user_id, u.username, u.email, u.phone, u.is_active, u.created_at, u.updated_at
+        ORDER BY u.username
+        """
+        return execute_user_admin_query(query)
+    
+    def load_roles_data():
+        """Load comprehensive roles data with permission and user counts"""
+        query = """
+        SELECT r.role_id, r.role_name, r.description, r.is_active,
+               COUNT(DISTINCT ur.user_id) as user_count,
+               COUNT(DISTINCT rp.permission_id) as permission_count,
+               r.created_at, r.updated_at
+        FROM roles r
+        LEFT JOIN user_roles ur ON r.role_id = ur.role_id
+        LEFT JOIN role_permissions rp ON r.role_id = rp.role_id
+        GROUP BY r.role_id, r.role_name, r.description, r.is_active, r.created_at, r.updated_at
+        ORDER BY r.role_name
+        """
+        return execute_user_admin_query(query)
+    
+    def load_permissions_data():
+        """Load comprehensive permissions data with usage information"""
+        query = """
+        SELECT p.permission_id, p.permission_name, p.description, p.is_active,
+               COUNT(DISTINCT rp.role_id) as role_count,
+               p.created_at
+        FROM permissions p
+        LEFT JOIN role_permissions rp ON p.permission_id = rp.permission_id
+        GROUP BY p.permission_id, p.permission_name, p.description, p.is_active, p.created_at
+        ORDER BY p.permission_name
+        """
+        return execute_user_admin_query(query)
+    
+    def get_available_roles():
+        """Get all active roles for dropdown selection"""
+        query = "SELECT role_id, role_name FROM roles WHERE is_active = TRUE ORDER BY role_name"
+        df = execute_user_admin_query(query)
+        if not df.empty:
+            return {str(row['role_id']): row['role_name'] for _, row in df.iterrows()}
+        return {}
+    
+    def get_available_permissions():
+        """Get all active permissions for dropdown selection"""
+        query = "SELECT permission_id, permission_name FROM permissions WHERE is_active = TRUE ORDER BY permission_name"
+        df = execute_user_admin_query(query)
+        if not df.empty:
+            return {str(row['permission_id']): row['permission_name'] for _, row in df.iterrows()}
+        return {}
+    
+    def get_user_roles(user_id):
+        """Get roles assigned to a specific user"""
+        query = f"""
+        SELECT r.role_id, r.role_name, ur.assigned_at
+        FROM roles r
+        JOIN user_roles ur ON r.role_id = ur.role_id
+        WHERE ur.user_id = {user_id}
+        ORDER BY r.role_name
+        """
+        return execute_user_admin_query(query)
+    
+    def get_role_permissions(role_id):
+        """Get permissions assigned to a specific role"""
+        query = f"""
+        SELECT p.permission_id, p.permission_name, rp.assigned_at
+        FROM permissions p
+        JOIN role_permissions rp ON p.permission_id = rp.permission_id
+        WHERE rp.role_id = {role_id}
+        ORDER BY p.permission_name
+        """
+        return execute_user_admin_query(query)
+    
+    # ==============================================================
+    # USER ADMIN: TABLE DISPLAYS WITH ENHANCED DATA
+    # ==============================================================
+    
+    @output
+    @render.data_frame
+    def users_table_display():
+        """Enhanced users table with comprehensive information - reactive to changes"""
+        # Force refresh when data changes
+        data_refresh_counter()
+        try:
+            df = load_users_data()
+            current_users_data.set(df)
+            return df
+        except Exception:
+            return pd.DataFrame(columns=['username', 'email', 'phone', 'roles', 'is_active'])
+    
+    @output
+    @render.data_frame
+    def roles_table_display():
+        """Enhanced roles table with user and permission counts - reactive to changes"""
+        # Force refresh when data changes
+        data_refresh_counter()
+        try:
+            df = load_roles_data()
+            current_roles_data.set(df)
+            return df
+        except Exception:
+            return pd.DataFrame(columns=['role_name', 'description', 'user_count', 'permission_count', 'is_active'])
+    
+    @output
+    @render.data_frame
+    def permissions_table_display():
+        """Enhanced permissions table with usage information - reactive to changes"""
+        # Force refresh when data changes
+        data_refresh_counter()
+        try:
+            df = load_permissions_data()
+            current_permissions_data.set(df)
+            return df
+        except Exception:
+            return pd.DataFrame(columns=['permission_name', 'description', 'role_count', 'is_active'])
+    
+    # Dynamic dropdown population - reactive to data changes
+    @reactive.Effect
+    def update_user_admin_dropdowns():
+        """Update dropdown choices based on current data - reactive to changes"""
+        # React to data changes
+        data_refresh_counter()
+        
+        # Update user choices
+        users_df = current_users_data()
+        if not users_df.empty:
+            user_choices = {str(row['user_id']): f"{row['username']} ({row['email']})" 
+                          for _, row in users_df.iterrows()}
+            ui.update_selectize("selected_user", choices=user_choices)
+        
+        # Update role choices
+        roles_df = current_roles_data()
+        if not roles_df.empty:
+            role_choices = {str(row['role_id']): row['role_name'] 
+                          for _, row in roles_df.iterrows()}
+            ui.update_selectize("selected_role", choices=role_choices)
+            ui.update_selectize("assign_role_to_user", choices=role_choices)
+        
+        # Update permission choices
+        permissions_df = current_permissions_data()
+        if not permissions_df.empty:
+            permission_choices = {str(row['permission_id']): row['permission_name'] 
+                                for _, row in permissions_df.iterrows()}
+            ui.update_selectize("selected_permission", choices=permission_choices)
+            ui.update_selectize("assign_permission_to_role", choices=permission_choices)
+    
+    # User role assignments display
+    @output
+    @render.ui
+    def user_roles_display():
+        """Display roles assigned to selected user"""
+        selected_user_id = input.selected_user()
+        if not selected_user_id:
+            return ui.p("Select a user to view their roles")
+        
+        try:
+            roles_df = get_user_roles(int(selected_user_id))
+            if roles_df.empty:
+                return ui.p("No roles assigned")
+            
+            role_badges = [ui.span(role, class_="badge badge-primary me-1") 
+                          for role in roles_df['role_name']]
+            return ui.div(*role_badges)
+        except Exception:
+            return ui.p("Error loading user roles")
+    
+    # Role permission assignments display
+    @output
+    @render.ui
+    def role_permissions_display():
+        """Display permissions assigned to selected role"""
+        selected_role_id = input.selected_role()
+        if not selected_role_id:
+            return ui.p("Select a role to view its permissions")
+        
+        try:
+            permissions_df = get_role_permissions(int(selected_role_id))
+            if permissions_df.empty:
+                return ui.p("No permissions assigned")
+            
+            permission_badges = [ui.span(perm, class_="badge badge-info me-1") 
+                               for perm in permissions_df['permission_name']]
+            return ui.div(*permission_badges)
+        except Exception:
+            return ui.p("Error loading role permissions")
+    
+    # User Admin status display
+    @output
+    @render.text
+    def user_admin_status_display():
+        """Display User Admin operation status"""
+        return user_admin_status()
+    
+    # ==============================================================
+    # USER ADMIN: ENTERPRISE-GRADE CRUD OPERATIONS
+    # ==============================================================
+    
+    # User CRUD Operations
+    @reactive.Effect
+    @reactive.event(input.add_new_user)
+    def handle_add_new_user():
+        """Add new user with validation"""
+        username = input.user_username().strip()
+        email = input.user_email().strip()
+        phone = input.user_phone().strip()
+        is_active = input.user_is_active()
+        
+        if not username or not email:
+            user_admin_status.set("Error: Username and email are required")
+            return
+        
+        try:
+            # Check for existing username/email
+            check_query = f"SELECT COUNT(*) as count FROM users WHERE username = '{username}' OR email = '{email}'"
+            check_result = execute_user_admin_query(check_query)
+            
+            if not check_result.empty and check_result.iloc[0]['count'] > 0:
+                user_admin_status.set(f"Error: Username '{username}' or email '{email}' already exists")
+                return
+            
+            # Insert new user
+            insert_query = f"""
+            INSERT INTO users (username, email, phone, is_active, updated_at) 
+            VALUES ('{username}', '{email}', '{phone}', {is_active}, CURRENT_TIMESTAMP)
+            """
+            execute_user_admin_query(insert_query)
+            user_admin_status.set(f"✓ User '{username}' created successfully")
+            
+            # Clear form
+            ui.update_text("user_username", value="")
+            ui.update_text("user_email", value="")
+            ui.update_text("user_phone", value="")
+            
+        except Exception as e:
+            user_admin_status.set(f"Error creating user: {str(e)}")
+    
+    @reactive.Effect
+    @reactive.event(input.update_user)
+    def handle_update_user():
+        """Update selected user with validation"""
+        selected_user_id = input.selected_user()
+        if not selected_user_id:
+            user_admin_status.set("Error: No user selected for update")
+            return
+        
+        username = input.user_username().strip()
+        email = input.user_email().strip()
+        phone = input.user_phone().strip()
+        is_active = input.user_is_active()
+        
+        if not username or not email:
+            user_admin_status.set("Error: Username and email are required")
+            return
+        
+        try:
+            # Check for conflicts with other users
+            check_query = f"""
+            SELECT COUNT(*) as count FROM users 
+            WHERE (username = '{username}' OR email = '{email}') 
+            AND user_id != {selected_user_id}
+            """
+            check_result = execute_user_admin_query(check_query)
+            
+            if not check_result.empty and check_result.iloc[0]['count'] > 0:
+                user_admin_status.set(f"Error: Username '{username}' or email '{email}' already exists")
+                return
+            
+            # Update user
+            update_query = f"""
+            UPDATE users 
+            SET username = '{username}', email = '{email}', phone = '{phone}', 
+                is_active = {is_active}, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = {selected_user_id}
+            """
+            execute_user_admin_query(update_query)
+            user_admin_status.set(f"✓ User updated successfully")
+            
+        except Exception as e:
+            user_admin_status.set(f"Error updating user: {str(e)}")
+    
+    @reactive.Effect
+    @reactive.event(input.delete_user)
+    def handle_delete_user():
+        """Delete selected user with reference safety"""
+        selected_user_id = input.selected_user()
+        if not selected_user_id:
+            user_admin_status.set("Error: No user selected for deletion")
+            return
+        
+        try:
+            # Check for role assignments
+            check_query = f"SELECT COUNT(*) as count FROM user_roles WHERE user_id = {selected_user_id}"
+            check_result = execute_user_admin_query(check_query)
+            
+            if not check_result.empty and check_result.iloc[0]['count'] > 0:
+                user_admin_status.set("🚫 DELETION BLOCKED: User has assigned roles. Remove roles first.")
+                return
+            
+            # Safe to delete user
+            delete_query = f"DELETE FROM users WHERE user_id = {selected_user_id}"
+            execute_user_admin_query(delete_query)
+            user_admin_status.set("✓ User deleted successfully")
+            
+            # Clear selection
+            ui.update_selectize("selected_user", selected=None)
+            
+        except Exception as e:
+            user_admin_status.set(f"Error deleting user: {str(e)}")
+    
+    # User-Role Assignment Operations
+    @reactive.Effect
+    @reactive.event(input.assign_role)
+    def handle_assign_role():
+        """Assign role to selected user"""
+        selected_user_id = input.selected_user()
+        selected_role_id = input.assign_role_to_user()
+        
+        if not selected_user_id or not selected_role_id:
+            user_admin_status.set("Error: Select both user and role")
+            return
+        
+        try:
+            # Check if already assigned
+            check_query = f"""
+            SELECT COUNT(*) as count FROM user_roles 
+            WHERE user_id = {selected_user_id} AND role_id = {selected_role_id}
+            """
+            check_result = execute_user_admin_query(check_query)
+            
+            if not check_result.empty and check_result.iloc[0]['count'] > 0:
+                user_admin_status.set("Error: Role already assigned to user")
+                return
+            
+            # Assign role
+            insert_query = f"""
+            INSERT INTO user_roles (user_id, role_id, assigned_at) 
+            VALUES ({selected_user_id}, {selected_role_id}, CURRENT_TIMESTAMP)
+            """
+            execute_user_admin_query(insert_query)
+            user_admin_status.set("✓ Role assigned successfully")
+            
+        except Exception as e:
+            user_admin_status.set(f"Error assigning role: {str(e)}")
+    
+    @reactive.Effect
+    @reactive.event(input.remove_user_role)
+    def handle_remove_user_role():
+        """Remove role from selected user"""
+        selected_user_id = input.selected_user()
+        selected_role_id = input.assign_role_to_user()
+        
+        if not selected_user_id or not selected_role_id:
+            user_admin_status.set("Error: Select both user and role to remove")
+            return
+        
+        try:
+            # Remove role assignment
+            delete_query = f"""
+            DELETE FROM user_roles 
+            WHERE user_id = {selected_user_id} AND role_id = {selected_role_id}
+            """
+            execute_user_admin_query(delete_query)
+            user_admin_status.set("✓ Role removed successfully")
+            
+        except Exception as e:
+            user_admin_status.set(f"Error removing role: {str(e)}")
+    
+    # Role CRUD Operations
+    @reactive.Effect
+    @reactive.event(input.add_new_role)
+    def handle_add_new_role():
+        """Add new role with validation"""
+        role_name = input.role_name().strip()
+        description = input.role_description().strip()
+        is_active = input.role_is_active()
+        
+        if not role_name:
+            user_admin_status.set("Error: Role name is required")
+            return
+        
+        try:
+            # Check for existing role name
+            check_query = f"SELECT COUNT(*) as count FROM roles WHERE role_name = '{role_name}'"
+            check_result = execute_user_admin_query(check_query)
+            
+            if not check_result.empty and check_result.iloc[0]['count'] > 0:
+                user_admin_status.set(f"Error: Role '{role_name}' already exists")
+                return
+            
+            # Insert new role
+            insert_query = f"""
+            INSERT INTO roles (role_name, description, is_active, updated_at) 
+            VALUES ('{role_name}', '{description}', {is_active}, CURRENT_TIMESTAMP)
+            """
+            execute_user_admin_query(insert_query)
+            user_admin_status.set(f"✓ Role '{role_name}' created successfully")
+            
+            # Clear form
+            ui.update_text("role_name", value="")
+            ui.update_text_area("role_description", value="")
+            
+        except Exception as e:
+            user_admin_status.set(f"Error creating role: {str(e)}")
+    
+    @reactive.Effect
+    @reactive.event(input.update_role)
+    def handle_update_role():
+        """Update selected role with validation"""
+        selected_role_id = input.selected_role()
+        if not selected_role_id:
+            user_admin_status.set("Error: No role selected for update")
+            return
+        
+        role_name = input.role_name().strip()
+        description = input.role_description().strip()
+        is_active = input.role_is_active()
+        
+        if not role_name:
+            user_admin_status.set("Error: Role name is required")
+            return
+        
+        try:
+            # Check for conflicts with other roles
+            check_query = f"""
+            SELECT COUNT(*) as count FROM roles 
+            WHERE role_name = '{role_name}' AND role_id != {selected_role_id}
+            """
+            check_result = execute_user_admin_query(check_query)
+            
+            if not check_result.empty and check_result.iloc[0]['count'] > 0:
+                user_admin_status.set(f"Error: Role name '{role_name}' already exists")
+                return
+            
+            # Update role
+            update_query = f"""
+            UPDATE roles 
+            SET role_name = '{role_name}', description = '{description}', 
+                is_active = {is_active}, updated_at = CURRENT_TIMESTAMP
+            WHERE role_id = {selected_role_id}
+            """
+            execute_user_admin_query(update_query)
+            user_admin_status.set(f"✓ Role updated successfully")
+            
+        except Exception as e:
+            user_admin_status.set(f"Error updating role: {str(e)}")
+    
+    @reactive.Effect
+    @reactive.event(input.delete_role)
+    def handle_delete_role():
+        """Delete selected role with reference safety"""
+        selected_role_id = input.selected_role()
+        if not selected_role_id:
+            user_admin_status.set("Error: No role selected for deletion")
+            return
+        
+        try:
+            # Check for user assignments and permissions
+            user_check_query = f"SELECT COUNT(*) as count FROM user_roles WHERE role_id = {selected_role_id}"
+            perm_check_query = f"SELECT COUNT(*) as count FROM role_permissions WHERE role_id = {selected_role_id}"
+            
+            user_result = execute_user_admin_query(user_check_query)
+            perm_result = execute_user_admin_query(perm_check_query)
+            
+            references = []
+            if not user_result.empty and user_result.iloc[0]['count'] > 0:
+                references.append("user assignments")
+            if not perm_result.empty and perm_result.iloc[0]['count'] > 0:
+                references.append("permission assignments")
+            
+            if references:
+                user_admin_status.set(f"🚫 DELETION BLOCKED: Role has {', '.join(references)}. Remove assignments first.")
+                return
+            
+            # Safe to delete role
+            delete_query = f"DELETE FROM roles WHERE role_id = {selected_role_id}"
+            execute_user_admin_query(delete_query)
+            user_admin_status.set("✓ Role deleted successfully")
+            
+            # Clear selection
+            ui.update_selectize("selected_role", selected=None)
+            
+        except Exception as e:
+            user_admin_status.set(f"Error deleting role: {str(e)}")
+    
+    # Role-Permission Assignment Operations
+    @reactive.Effect
+    @reactive.event(input.assign_permission)
+    def handle_assign_permission():
+        """Assign permission to selected role"""
+        selected_role_id = input.selected_role()
+        selected_permission_id = input.assign_permission_to_role()
+        
+        if not selected_role_id or not selected_permission_id:
+            user_admin_status.set("Error: Select both role and permission")
+            return
+        
+        try:
+            # Check if already assigned
+            check_query = f"""
+            SELECT COUNT(*) as count FROM role_permissions 
+            WHERE role_id = {selected_role_id} AND permission_id = {selected_permission_id}
+            """
+            check_result = execute_user_admin_query(check_query)
+            
+            if not check_result.empty and check_result.iloc[0]['count'] > 0:
+                user_admin_status.set("Error: Permission already assigned to role")
+                return
+            
+            # Assign permission
+            insert_query = f"""
+            INSERT INTO role_permissions (role_id, permission_id, assigned_at) 
+            VALUES ({selected_role_id}, {selected_permission_id}, CURRENT_TIMESTAMP)
+            """
+            execute_user_admin_query(insert_query)
+            user_admin_status.set("✓ Permission assigned successfully")
+            
+        except Exception as e:
+            user_admin_status.set(f"Error assigning permission: {str(e)}")
+    
+    @reactive.Effect
+    @reactive.event(input.remove_role_permission)
+    def handle_remove_role_permission():
+        """Remove permission from selected role"""
+        selected_role_id = input.selected_role()
+        selected_permission_id = input.assign_permission_to_role()
+        
+        if not selected_role_id or not selected_permission_id:
+            user_admin_status.set("Error: Select both role and permission to remove")
+            return
+        
+        try:
+            # Remove permission assignment
+            delete_query = f"""
+            DELETE FROM role_permissions 
+            WHERE role_id = {selected_role_id} AND permission_id = {selected_permission_id}
+            """
+            execute_user_admin_query(delete_query)
+            user_admin_status.set("✓ Permission removed successfully")
+            
+        except Exception as e:
+            user_admin_status.set(f"Error removing permission: {str(e)}")
+    
+    # Permission CRUD Operations
+    @reactive.Effect
+    @reactive.event(input.add_new_permission)
+    def handle_add_new_permission():
+        """Add new permission with validation"""
+        permission_name = input.permission_name().strip()
+        description = input.permission_description().strip()
+        is_active = input.permission_is_active()
+        
+        if not permission_name:
+            user_admin_status.set("Error: Permission name is required")
+            return
+        
+        try:
+            # Check for existing permission name
+            check_query = f"SELECT COUNT(*) as count FROM permissions WHERE permission_name = '{permission_name}'"
+            check_result = execute_user_admin_query(check_query)
+            
+            if not check_result.empty and check_result.iloc[0]['count'] > 0:
+                user_admin_status.set(f"Error: Permission '{permission_name}' already exists")
+                return
+            
+            # Insert new permission
+            insert_query = f"""
+            INSERT INTO permissions (permission_name, description, is_active) 
+            VALUES ('{permission_name}', '{description}', {is_active})
+            """
+            execute_user_admin_query(insert_query)
+            user_admin_status.set(f"✓ Permission '{permission_name}' created successfully")
+            
+            # Clear form
+            ui.update_text("permission_name", value="")
+            ui.update_text_area("permission_description", value="")
+            
+        except Exception as e:
+            user_admin_status.set(f"Error creating permission: {str(e)}")
+    
+    @reactive.Effect
+    @reactive.event(input.update_permission)
+    def handle_update_permission():
+        """Update selected permission with validation"""
+        selected_permission_id = input.selected_permission()
+        if not selected_permission_id:
+            user_admin_status.set("Error: No permission selected for update")
+            return
+        
+        permission_name = input.permission_name().strip()
+        description = input.permission_description().strip()
+        is_active = input.permission_is_active()
+        
+        if not permission_name:
+            user_admin_status.set("Error: Permission name is required")
+            return
+        
+        try:
+            # Check for conflicts with other permissions
+            check_query = f"""
+            SELECT COUNT(*) as count FROM permissions 
+            WHERE permission_name = '{permission_name}' AND permission_id != {selected_permission_id}
+            """
+            check_result = execute_user_admin_query(check_query)
+            
+            if not check_result.empty and check_result.iloc[0]['count'] > 0:
+                user_admin_status.set(f"Error: Permission name '{permission_name}' already exists")
+                return
+            
+            # Update permission
+            update_query = f"""
+            UPDATE permissions 
+            SET permission_name = '{permission_name}', description = '{description}', is_active = {is_active}
+            WHERE permission_id = {selected_permission_id}
+            """
+            execute_user_admin_query(update_query)
+            user_admin_status.set(f"✓ Permission updated successfully")
+            
+        except Exception as e:
+            user_admin_status.set(f"Error updating permission: {str(e)}")
+    
+    @reactive.Effect
+    @reactive.event(input.delete_permission)
+    def handle_delete_permission():
+        """Delete selected permission with reference safety"""
+        selected_permission_id = input.selected_permission()
+        if not selected_permission_id:
+            user_admin_status.set("Error: No permission selected for deletion")
+            return
+        
+        try:
+            # Check for role assignments
+            check_query = f"SELECT COUNT(*) as count FROM role_permissions WHERE permission_id = {selected_permission_id}"
+            check_result = execute_user_admin_query(check_query)
+            
+            if not check_result.empty and check_result.iloc[0]['count'] > 0:
+                user_admin_status.set("🚫 DELETION BLOCKED: Permission has role assignments. Remove assignments first.")
+                return
+            
+            # Safe to delete permission
+            delete_query = f"DELETE FROM permissions WHERE permission_id = {selected_permission_id}"
+            execute_user_admin_query(delete_query)
+            user_admin_status.set("✓ Permission deleted successfully")
+            
+            # Clear selection
+            ui.update_selectize("selected_permission", selected=None)
+            
+        except Exception as e:
+            user_admin_status.set(f"Error deleting permission: {str(e)}")
+    
+    # Form population when items are selected
+    @reactive.Effect
+    @reactive.event(input.selected_user)
+    def handle_user_selection():
+        """Populate user form when user is selected"""
+        selected_user_id = input.selected_user()
+        if not selected_user_id:
+            return
+        
+        try:
+            users_df = current_users_data()
+            if not users_df.empty:
+                user_row = users_df[users_df['user_id'] == int(selected_user_id)]
+                if not user_row.empty:
+                    user = user_row.iloc[0]
+                    ui.update_text("user_username", value=user['username'])
+                    ui.update_text("user_email", value=user['email'])
+                    ui.update_text("user_phone", value=user['phone'] if pd.notna(user['phone']) else "")
+                    ui.update_checkbox("user_is_active", value=user['is_active'])
+        except Exception:
+            pass
+    
+    @reactive.Effect
+    @reactive.event(input.selected_role)
+    def handle_role_selection():
+        """Populate role form when role is selected"""
+        selected_role_id = input.selected_role()
+        if not selected_role_id:
+            return
+        
+        try:
+            roles_df = current_roles_data()
+            if not roles_df.empty:
+                role_row = roles_df[roles_df['role_id'] == int(selected_role_id)]
+                if not role_row.empty:
+                    role = role_row.iloc[0]
+                    ui.update_text("role_name", value=role['role_name'])
+                    ui.update_text_area("role_description", value=role['description'] if pd.notna(role['description']) else "")
+                    ui.update_checkbox("role_is_active", value=role['is_active'])
+        except Exception:
+            pass
+    
+    @reactive.Effect
+    @reactive.event(input.selected_permission)
+    def handle_permission_selection():
+        """Populate permission form when permission is selected"""
+        selected_permission_id = input.selected_permission()
+        if not selected_permission_id:
+            return
+        
+        try:
+            permissions_df = current_permissions_data()
+            if not permissions_df.empty:
+                permission_row = permissions_df[permissions_df['permission_id'] == int(selected_permission_id)]
+                if not permission_row.empty:
+                    permission = permission_row.iloc[0]
+                    ui.update_text("permission_name", value=permission['permission_name'])
+                    ui.update_text_area("permission_description", value=permission['description'] if pd.notna(permission['description']) else "")
+                    ui.update_checkbox("permission_is_active", value=permission['is_active'])
+        except Exception:
+            pass
+    
     # Workflow Admin: Reactive values for node editing
     current_workflow_config = reactive.Value(config_manager.get_workflow_config())
     save_status = reactive.Value("")
+    
+    # User Admin: Reactive values for user/role/permission management  
+    user_admin_status = reactive.Value("")
+    current_users_data = reactive.Value(pd.DataFrame())
+    current_roles_data = reactive.Value(pd.DataFrame()) 
+    current_permissions_data = reactive.Value(pd.DataFrame())
+    data_refresh_counter = reactive.Value(0)  # Forces UI refresh after CRUD operations
     
     # Node selector that updates dynamically
     @output
@@ -430,7 +1253,7 @@ def server(input, output, session):
     @output
     @render.ui
     def workflow_graph_display():
-        """Display workflow as a visual graph"""
+        """Display workflow as an interactive graph visualization"""
         config = current_workflow_config()
         
         if not config or 'workflow' not in config:
@@ -439,37 +1262,200 @@ def server(input, output, session):
                 class_="text-muted"
             )
         
-        # Create a simple textual representation of the workflow graph
-        # In a production app, you'd want to use a proper graph visualization library
-        graph_description = []
+        # Generate interactive graph using Vis.js
         workflow = config['workflow']
         
+        # Create nodes and edges for the graph
+        nodes = []
+        edges = []
+        
+        # Define node colors by class type
+        node_colors = {
+            'Start': '#28a745',      # Green
+            'Stop': '#dc3545',       # Red  
+            'ExclusiveChoice': '#ffc107',  # Yellow/Amber
+            'Simple': '#007bff',     # Blue
+            'RESTCall': '#6f42c1',   # Purple
+            'EmailNotify': '#fd7e14', # Orange
+            'SMSNotify': '#20c997',  # Teal
+            'Cancel': '#6c757d',     # Gray
+            'MultiChoice': '#e83e8c', # Pink
+            'MutexChoice': '#17a2b8'  # Cyan
+        }
+        
+        # Create nodes
         for node_name, node_details in workflow.items():
-            inputs = node_details.get('inputs', [])
-            outputs = node_details.get('outputs', [])
             node_class = node_details.get('class', 'Unknown')
+            node_id = node_details.get('id', 0)
+            require_action = node_details.get('require_user_action', False)
             
-            if inputs:
-                input_str = ' ← '.join(inputs)
-                graph_description.append(f"{input_str} → [{node_name}] ({node_class})")
-            else:
-                graph_description.append(f"[{node_name}] ({node_class})")
+            color = node_colors.get(node_class, '#6c757d')
             
-            if outputs:
-                for output in outputs:
-                    graph_description.append(f"  └─→ {output}")
+            # Create node with enhanced styling
+            shape = 'diamond' if node_class == 'ExclusiveChoice' else 'box'
+            if node_class == 'Start':
+                shape = 'ellipse'
+            elif node_class == 'Stop':
+                shape = 'ellipse'
+                
+            border_width = 3 if require_action else 1
+            
+            nodes.append({
+                'id': node_name,
+                'label': f"{node_name}\\n({node_class})\\nID: {node_id}",
+                'color': {
+                    'background': color,
+                    'border': '#2e3d49',
+                    'highlight': {'background': color, 'border': '#2e3d49'}
+                },
+                'shape': shape,
+                'borderWidth': border_width,
+                'font': {'size': 12, 'color': 'white' if node_class in ['Start', 'Stop'] else 'black'}
+            })
+        
+        # Create edges
+        for node_name, node_details in workflow.items():
+            outputs = node_details.get('outputs', [])
+            conditions = node_details.get('conditions', {})
+            
+            for output in outputs:
+                edge_label = "Default"
+                edge_color = '#848484'
+                
+                # Check for conditional edges
+                for condition_name, condition_details in conditions.items():
+                    if condition_details.get('next_status') == output:
+                        operator = condition_details.get('operator', '')
+                        attribute = condition_details.get('attribute', '')
+                        value = condition_details.get('value', '')
+                        edge_label = f"{attribute} {operator} {value}"
+                        edge_color = '#007bff'  # Blue for conditional edges
+                        break
+                
+                edges.append({
+                    'from': node_name,
+                    'to': output,
+                    'label': edge_label,
+                    'color': {'color': edge_color},
+                    'arrows': 'to',
+                    'font': {'size': 10, 'align': 'middle'},
+                    'smooth': {'type': 'continuous'}
+                })
+        
+        # Convert to JSON for JavaScript
+        import json
+        nodes_json = json.dumps(nodes)
+        edges_json = json.dumps(edges)
+        
+        # Create the interactive graph HTML
+        graph_html = f"""
+        <div id="workflow-graph" style="width: 100%; height: 600px; border: 1px solid #ccc; border-radius: 8px;"></div>
+        
+        <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+        <script>
+            // Create nodes and edges
+            var nodes = new vis.DataSet({nodes_json});
+            var edges = new vis.DataSet({edges_json});
+            
+            // Create a network
+            var container = document.getElementById('workflow-graph');
+            var data = {{
+                nodes: nodes,
+                edges: edges
+            }};
+            
+            var options = {{
+                nodes: {{
+                    borderWidth: 2,
+                    shadow: true,
+                    font: {{
+                        size: 12,
+                        face: 'Tahoma'
+                    }}
+                }},
+                edges: {{
+                    width: 2,
+                    shadow: true,
+                    smooth: {{
+                        type: 'continuous'
+                    }}
+                }},
+                physics: {{
+                    enabled: true,
+                    stabilization: {{
+                        enabled: true,
+                        iterations: 100
+                    }},
+                    barnesHut: {{
+                        gravitationalConstant: -2000,
+                        centralGravity: 0.3,
+                        springLength: 95,
+                        springConstant: 0.04,
+                        damping: 0.09,
+                        avoidOverlap: 0.1
+                    }}
+                }},
+                layout: {{
+                    hierarchical: {{
+                        enabled: true,
+                        direction: 'UD',
+                        sortMethod: 'directed',
+                        levelSeparation: 100,
+                        nodeSpacing: 150
+                    }}
+                }},
+                interaction: {{
+                    zoomView: true,
+                    dragView: true,
+                    hover: true,
+                    selectConnectedEdges: false
+                }}
+            }};
+            
+            var network = new vis.Network(container, data, options);
+            
+            // Add click event listener
+            network.on("click", function (params) {{
+                if (params.nodes.length > 0) {{
+                    var nodeId = params.nodes[0];
+                    alert('Clicked on node: ' + nodeId);
+                }}
+            }});
+        </script>
+        """
         
         return ui.div(
-            ui.h5("Workflow Flow Diagram"),
-            ui.div(
-                *[ui.p(desc, style="font-family: monospace; margin: 0.2em 0;") for desc in graph_description],
-                style="background-color: #f8f9fa; padding: 1rem; border-radius: 0.375rem; border: 1px solid #dee2e6;"
-            ),
+            ui.h5("Interactive Workflow Graph"),
+            ui.HTML(graph_html),
             ui.br(),
             ui.div(
-                ui.strong("Legend: "),
-                ui.span("[Node Name] (Class Type) ← Input → Output", style="font-family: monospace;"),
-                class_="text-muted"
+                ui.row(
+                    ui.column(6,
+                        ui.h6("Legend:"),
+                        ui.div(
+                            ui.span("●", style="color: #28a745; font-size: 16px;"), " Start Node", ui.br(),
+                            ui.span("●", style="color: #dc3545; font-size: 16px;"), " Stop Node", ui.br(),
+                            ui.span("◆", style="color: #ffc107; font-size: 16px;"), " Decision Node", ui.br(),
+                            ui.span("■", style="color: #007bff; font-size: 16px;"), " Process Node", ui.br(),
+                            ui.span("■", style="color: #6f42c1; font-size: 16px;"), " API Call", ui.br(),
+                            ui.span("■", style="color: #fd7e14; font-size: 16px;"), " Email Notify", ui.br(),
+                            ui.span("■", style="color: #20c997; font-size: 16px;"), " SMS Notify"
+                        )
+                    ),
+                    ui.column(6,
+                        ui.h6("Features:"),
+                        ui.div(
+                            "• Zoom and pan the graph", ui.br(),
+                            "• Click nodes for details", ui.br(), 
+                            "• Thick borders = User Action Required", ui.br(),
+                            "• Blue edges = Conditional flows", ui.br(),
+                            "• Gray edges = Default flows", ui.br(),
+                            "• Hierarchical layout shows flow direction"
+                        )
+                    )
+                ),
+                class_="text-muted",
+                style="background-color: #f8f9fa; padding: 1rem; border-radius: 0.375rem; margin-top: 1rem;"
             )
         )
     
