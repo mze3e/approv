@@ -1,36 +1,41 @@
-from SpiffWorkflow.specs import WorkflowSpec, ExclusiveChoice, Simple, Cancel
-from SpiffWorkflow.operators import Equal, Attrib
+# Note: This appears to be an example file. The current SpiffWorkflow version has different imports.
+# from SpiffWorkflow.specs import WorkflowSpec, ExclusiveChoice, Simple, Cancel
+# from SpiffWorkflow.operators import Equal, Attrib
 
-def my_nuclear_strike(msg):
-    print("Launched:", msg)
+# For now, commenting out this example as it's not used by the main application
 
-class NuclearStrikeWorkflowSpec(WorkflowSpec):
-    def __init__(self):
-        WorkflowSpec.__init__(self)
+# def my_nuclear_strike(msg):
+#     print("Launched:", msg)
 
-        # The first step of our workflow is to let the general confirm
-        # the nuclear strike.
-        general_choice = ExclusiveChoice(self, 'general')
-        self.start.connect(general_choice)
+# class NuclearStrikeWorkflowSpec(WorkflowSpec):
+#     def __init__(self):
+#         WorkflowSpec.__init__(self)
 
-        # The default choice of the general is to abort.
-        cancel = Cancel(self, 'workflow_aborted')
-        general_choice.connect(cancel)
+#         # The first step of our workflow is to let the general confirm
+#         # the nuclear strike.
+#         general_choice = ExclusiveChoice(self, 'general')
+#         self.start.connect(general_choice)
 
-        # Otherwise, we will ask the president to confirm.
-        president_choice = ExclusiveChoice(self, 'president')
-        cond = Equal(Attrib('confirmation'), 'yes')
-        general_choice.connect_if(cond, president_choice)
+#         # The default choice of the general is to abort.
+#         cancel = Cancel(self, 'workflow_aborted')
+#         general_choice.connect(cancel)
 
-        # The default choice of the president is to abort.
-        president_choice.connect(cancel)
+#         # Otherwise, we will ask the president to confirm.
+#         president_choice = ExclusiveChoice(self, 'president')
+#         cond = Equal(Attrib('confirmation'), 'yes')
+#         general_choice.connect_if(cond, president_choice)
 
-        # Otherwise, we will perform the nuclear strike.
-        strike = Simple(self, 'nuclear_strike')
-        president_choice.connect_if(cond, strike)
+#         # The default choice of the president is to abort.
+#         president_choice.connect(cancel)
 
-        # Now we connect our Python function to the Task named 'nuclear_strike'
-        strike.completed_event.connect(my_nuclear_strike)
+#         # Otherwise, we will perform the nuclear strike.
+#         strike = Simple(self, 'nuclear_strike')
+#         president_choice.connect_if(cond, strike)
 
-        # As soon as all tasks are either "completed" or  "aborted", the
-        # workflow implicitely ends.
+#         # Now we connect our Python function to the Task named 'nuclear_strike'
+#         strike.completed_event.connect(my_nuclear_strike)
+
+#         # As soon as all tasks are either "completed" or  "aborted", the
+#         # workflow implicitely ends.
+
+print("SpiffWorkflow example file - commented out due to API changes")
