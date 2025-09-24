@@ -81,6 +81,18 @@ class ConfigManager:
         """Get workflow configuration"""
         return self.workflow_config
     
+    def save_workflow_config(self, config: Dict[str, Any]) -> bool:
+        """Save workflow configuration to YAML file"""
+        try:
+            with open('workflow.yaml', 'w') as f:
+                yaml.dump(config, f, default_flow_style=False, indent=2)
+            # Update internal configuration
+            self.workflow_config = config
+            return True
+        except Exception as e:
+            print(f"Error saving workflow config: {e}")
+            raise e
+    
     def get_form_config(self) -> Dict[str, Any]:
         """Get form configuration"""
         return self.form_config
