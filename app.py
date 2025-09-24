@@ -20,169 +20,516 @@ initial_form_data = config_manager.get_form_data()
 workflow_instance = ShinyWorkflow(workflow_config, form_config, initial_form_data)
 # Workflow renderer removed - using unified approach
 
-# App UI
+# Custom CSS for enhanced styling
+custom_css = """
+<style>
+/* Professional color palette and typography */
+:root {
+    --primary-blue: #2563eb;
+    --success-green: #059669;
+    --warning-orange: #d97706;
+    --danger-red: #dc2626;
+    --info-cyan: #0891b2;
+    --light-bg: #f8fafc;
+    --dark-text: #1e293b;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+/* Enhanced card styling */
+.enhanced-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--primary-blue), #3b82f6);
+    color: white;
+    padding: 1.5rem;
+    margin: 0;
+    border-bottom: none;
+}
+
+.card-body {
+    padding: 2rem;
+}
+
+/* Status indicators */
+.status-success { color: var(--success-green); font-weight: 600; }
+.status-warning { color: var(--warning-orange); font-weight: 600; }
+.status-danger { color: var(--danger-red); font-weight: 600; }
+.status-info { color: var(--info-cyan); font-weight: 600; }
+
+/* Enhanced buttons */
+.btn-enhanced {
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: none;
+    margin: 0.25rem;
+}
+
+.btn-enhanced:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Professional section headers */
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.section-icon {
+    font-size: 1.5rem;
+    margin-right: 0.75rem;
+    color: var(--primary-blue);
+}
+
+/* Loading indicator */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--primary-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 0.5rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive grid improvements */
+.enhanced-grid {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+/* Professional form styling */
+.enhanced-form {
+    background: var(--light-bg);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+}
+
+/* Navigation improvements */
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--primary-blue) !important;
+}
+
+/* Table improvements */
+.table-enhanced {
+    box-shadow: var(--shadow-sm);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Alert improvements */
+.alert-enhanced {
+    border-radius: 8px;
+    border: none;
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm);
+}
+</style>
+"""
+
+# App UI with enhanced styling
 app_ui = ui.page_navbar(
-    ui.nav_panel("Home", 
+    ui.nav_panel("🏠 Home", 
         ui.div(
-            ui.h1("BPMS - Business Process Management System"),
-            ui.br(),
-            ui.input_selectize(
-                "user_role", 
-                "Select User Role:", 
-                choices=["GENERAL_USER", "PRESIDENT_USER"],
-                selected="GENERAL_USER"
-            ),
-            ui.br(),
-            ui.input_action_button("start_workflow", "Start Workflow", class_="btn btn-primary"),
-            ui.br(),
-            ui.output_text("workflow_status_display"),
-            ui.output_text("workflow_error_display"),
-            ui.br(),
+            ui.HTML(custom_css),
+            # Main header section
             ui.div(
-                ui.h3("Dynamic Workflow Form"),
-                ui.output_ui("dynamic_form_container"),
-                ui.br(),
-                ui.h4("Audit Trail"),
-                ui.output_data_frame("audit_trail")
-            )
+                ui.div(
+                    ui.h1("🏢 BPMS", class_="navbar-brand", style="margin: 0; font-size: 2.5rem;"),
+                    ui.p("Business Process Management System", 
+                         class_="text-muted", style="font-size: 1.1rem; margin: 0;"),
+                    class_="text-center",
+                    style="padding: 2rem 0; background: linear-gradient(135deg, #f8fafc, #e2e8f0); border-radius: 12px; margin-bottom: 2rem;"
+                )
+            ),
+            
+            # Workflow Control Panel
+            ui.div(
+                ui.div(
+                    ui.h3("⚡ Workflow Control", class_="card-header", style="margin: 0; padding: 1.5rem;"),
+                    ui.div(
+                        ui.row(
+                            ui.column(6,
+                                ui.div(
+                                    ui.h5("👤 User Role", style="color: var(--dark-text); margin-bottom: 1rem;"),
+                                    ui.input_selectize(
+                                        "user_role", 
+                                        None,
+                                        choices=["GENERAL_USER", "PRESIDENT_USER"],
+                                        selected="GENERAL_USER"
+                                    )
+                                )
+                            ),
+                            ui.column(6,
+                                ui.div(
+                                    ui.h5("🚀 Action", style="color: var(--dark-text); margin-bottom: 1rem;"),
+                                    ui.input_action_button("start_workflow", "🚀 Start Workflow", 
+                                                          class_="btn btn-primary btn-enhanced",
+                                                          style="width: 100%;")
+                                )
+                            )
+                        ),
+                        ui.div(
+                            ui.output_text("workflow_status_display"),
+                            ui.output_text("workflow_error_display"),
+                            style="margin-top: 1.5rem;"
+                        ),
+                        class_="card-body"
+                    ),
+                    class_="enhanced-card"
+                )
+            ),
+            
+            # Dynamic Workflow Form Section
+            ui.div(
+                ui.div(
+                    ui.h3("📋 Dynamic Workflow Form", class_="card-header", style="margin: 0; padding: 1.5rem;"),
+                    ui.div(
+                        ui.output_ui("dynamic_form_container"),
+                        class_="card-body"
+                    ),
+                    class_="enhanced-card"
+                )
+            ),
+            
+            # Audit Trail Section
+            ui.div(
+                ui.div(
+                    ui.h3("📊 Audit Trail", class_="card-header", style="margin: 0; padding: 1.5rem;"),
+                    ui.div(
+                        ui.output_data_frame("audit_trail"),
+                        class_="card-body"
+                    ),
+                    class_="enhanced-card table-enhanced"
+                )
+            ),
+            
+            style="max-width: 1200px; margin: 0 auto; padding: 2rem;"
         )
     ),
-    ui.nav_panel("Workflow Admin",
+    ui.nav_panel("⚙️ Workflow Admin",
         ui.div(
-            ui.h1("Workflow Administration"),
-            ui.br(),
-            
-            # Workflow Nodes Section
+            # Main header section
             ui.div(
-                ui.h3("Workflow Nodes"),
-                ui.output_data_frame("workflow_nodes_table"),
-                ui.br(),
-                
-                # Node editing section
-                ui.h4("Edit Workflow Node"),
-                ui.output_ui("node_selector"),
-                ui.output_ui("node_edit_form"),
-                ui.br(),
-                
-                # Workflow visualization section
-                ui.h4("Workflow Visualization"),
-                ui.output_ui("workflow_graph_display"),
-                ui.br(),
-                
-                # Node operations section
-                ui.h4("Node Operations"),
                 ui.div(
-                    ui.input_action_button("add_new_node", "Add New Node", class_="btn btn-primary"),
-                    ui.input_action_button("delete_selected_node", "Delete Selected Node", class_="btn btn-danger"),
-                    ui.input_action_button("validate_workflow", "Validate Workflow", class_="btn btn-info"),
-                    style="margin-bottom: 1rem;"
+                    ui.h1("⚙️ Workflow Administration", class_="navbar-brand", style="margin: 0; font-size: 2.5rem;"),
+                    ui.p("Configure and manage your business process workflows", 
+                         class_="text-muted", style="font-size: 1.1rem; margin: 0;"),
+                    class_="text-center",
+                    style="padding: 2rem 0; background: linear-gradient(135deg, #f8fafc, #e2e8f0); border-radius: 12px; margin-bottom: 2rem;"
+                )
+            ),
+            
+            # Workflow Configuration Section
+            ui.row(
+                ui.column(8,
+                    # Workflow Nodes Table
+                    ui.div(
+                        ui.div(
+                            ui.h3("📋 Workflow Nodes", class_="card-header", style="margin: 0; padding: 1.5rem;"),
+                            ui.div(
+                                ui.output_data_frame("workflow_nodes_table"),
+                                class_="card-body"
+                            ),
+                            class_="enhanced-card table-enhanced"
+                        )
+                    ),
+                    
+                    # Interactive Workflow Visualization
+                    ui.div(
+                        ui.div(
+                            ui.h3("🎯 Workflow Visualization", class_="card-header", style="margin: 0; padding: 1.5rem;"),
+                            ui.div(
+                                ui.output_ui("workflow_graph_display"),
+                                class_="card-body"
+                            ),
+                            class_="enhanced-card"
+                        )
+                    )
                 ),
                 
-                # Save changes section
-                ui.div(
-                    ui.input_action_button("save_workflow_changes", "Save Changes", class_="btn btn-success"),
-                    ui.input_action_button("reload_workflow_instance", "Reload Workflow Instance", class_="btn btn-warning"),
-                    ui.output_text("save_status_display")
+                ui.column(4,
+                    # Node Editor Panel
+                    ui.div(
+                        ui.div(
+                            ui.h3("✏️ Node Editor", class_="card-header", style="margin: 0; padding: 1.5rem;"),
+                            ui.div(
+                                ui.div(
+                                    ui.h5("Select Node", style="color: var(--dark-text); margin-bottom: 1rem;"),
+                                    ui.output_ui("node_selector"),
+                                    class_="enhanced-form"
+                                ),
+                                ui.div(
+                                    ui.output_ui("node_edit_form"),
+                                    id="node-edit-form-container"
+                                ),
+                                class_="card-body"
+                            ),
+                            class_="enhanced-card"
+                        )
+                    ),
+                    
+                    # Operations Panel
+                    ui.div(
+                        ui.div(
+                            ui.h3("🔧 Operations", class_="card-header", style="margin: 0; padding: 1.5rem;"),
+                            ui.div(
+                                ui.div(
+                                    ui.h5("Node Operations", style="color: var(--dark-text); margin-bottom: 1rem;"),
+                                    ui.div(
+                                        ui.input_action_button("add_new_node", "➕ Add Node", 
+                                                              class_="btn btn-success btn-enhanced", 
+                                                              style="width: 100%; margin-bottom: 0.5rem;"),
+                                        ui.input_action_button("delete_selected_node", "🗑️ Delete Node", 
+                                                              class_="btn btn-danger btn-enhanced",
+                                                              style="width: 100%; margin-bottom: 0.5rem;"),
+                                        ui.input_action_button("validate_workflow", "✅ Validate", 
+                                                              class_="btn btn-info btn-enhanced",
+                                                              style="width: 100%; margin-bottom: 1rem;")
+                                    )
+                                ),
+                                ui.div(
+                                    ui.h5("Workflow Management", style="color: var(--dark-text); margin-bottom: 1rem;"),
+                                    ui.div(
+                                        ui.input_action_button("save_workflow_changes", "💾 Save Changes", 
+                                                              class_="btn btn-primary btn-enhanced",
+                                                              style="width: 100%; margin-bottom: 0.5rem;"),
+                                        ui.input_action_button("reload_workflow_instance", "🔄 Reload Instance", 
+                                                              class_="btn btn-warning btn-enhanced",
+                                                              style="width: 100%; margin-bottom: 1rem;")
+                                    )
+                                ),
+                                ui.div(
+                                    ui.output_text("save_status_display"),
+                                    style="margin-top: 1rem;"
+                                ),
+                                class_="card-body"
+                            ),
+                            class_="enhanced-card"
+                        )
+                    )
                 )
-            )
+            ),
+            
+            style="max-width: 1400px; margin: 0 auto; padding: 2rem;"
         )
     ),
-    ui.nav_panel("User Admin",
+    ui.nav_panel("👥 User Admin",
         ui.div(
-            ui.h1("User Administration"),
+            # Main header section
+            ui.div(
+                ui.div(
+                    ui.h1("👥 User Administration", class_="navbar-brand", style="margin: 0; font-size: 2.5rem;"),
+                    ui.p("Manage users, roles, and permissions with enterprise security", 
+                         class_="text-muted", style="font-size: 1.1rem; margin: 0;"),
+                    class_="text-center",
+                    style="padding: 2rem 0; background: linear-gradient(135deg, #f8fafc, #e2e8f0); border-radius: 12px; margin-bottom: 2rem;"
+                )
+            ),
+            
             # User Management Section
             ui.div(
-                ui.h2("User Management"),
-                ui.row(
-                    ui.column(8,
-                        ui.output_data_frame("users_table_display")
+                ui.div(
+                    ui.h3("👤 User Management", class_="card-header", style="margin: 0; padding: 1.5rem;"),
+                    ui.div(
+                        ui.row(
+                            ui.column(8,
+                                ui.output_data_frame("users_table_display")
+                            ),
+                            ui.column(4,
+                                ui.div(
+                                    ui.div(
+                                        ui.h5("User Details", style="color: var(--dark-text); margin-bottom: 1rem;"),
+                                        ui.input_selectize("selected_user", "Select User:", choices={}, selected=None),
+                                        ui.input_text("user_username", "Username:", placeholder="Enter username"),
+                                        ui.input_text("user_email", "Email:", placeholder="Enter email address"),
+                                        ui.input_text("user_phone", "Phone:", placeholder="Enter phone number"),
+                                        ui.input_checkbox("user_is_active", "Active User", value=True),
+                                        style="margin-bottom: 1.5rem;"
+                                    ),
+                                    ui.div(
+                                        ui.h6("User Operations", style="color: var(--dark-text); margin-bottom: 1rem;"),
+                                        ui.input_action_button("add_new_user", "➕ Add User", 
+                                                              class_="btn btn-success btn-enhanced",
+                                                              style="width: 100%; margin-bottom: 0.5rem;"),
+                                        ui.input_action_button("update_user", "✏️ Update User", 
+                                                              class_="btn btn-primary btn-enhanced",
+                                                              style="width: 100%; margin-bottom: 0.5rem;"),
+                                        ui.input_action_button("delete_user", "🗑️ Delete User", 
+                                                              class_="btn btn-danger btn-enhanced",
+                                                              style="width: 100%; margin-bottom: 1rem;")
+                                    ),
+                                    ui.div(
+                                        ui.h6("Role Management", style="color: var(--dark-text); margin-bottom: 1rem;"),
+                                        ui.output_ui("user_roles_display"),
+                                        ui.input_selectize("assign_role_to_user", "Assign Role:", choices={}, selected=None),
+                                        ui.input_action_button("assign_role", "🔗 Assign Role", 
+                                                              class_="btn btn-info btn-enhanced",
+                                                              style="width: 100%; margin-bottom: 0.5rem;"),
+                                        ui.input_action_button("remove_user_role", "🔓 Remove Role", 
+                                                              class_="btn btn-warning btn-enhanced",
+                                                              style="width: 100%;")
+                                    ),
+                                    class_="enhanced-form"
+                                )
+                            )
+                        ),
+                        class_="card-body"
                     ),
-                    ui.column(4,
-                        ui.div(
-                            ui.h4("User Details"),
-                            ui.input_selectize("selected_user", "Select User:", choices={}, selected=None),
-                            ui.input_text("user_username", "Username:", placeholder="Enter username"),
-                            ui.input_text("user_email", "Email:", placeholder="Enter email address"),
-                            ui.input_text("user_phone", "Phone:", placeholder="Enter phone number"),
-                            ui.input_checkbox("user_is_active", "Active User", value=True),
-                            ui.br(),
-                            ui.input_action_button("add_new_user", "Add New User", class_="btn btn-success"),
-                            ui.input_action_button("update_user", "Update User", class_="btn btn-primary"),
-                            ui.input_action_button("delete_user", "Delete User", class_="btn btn-danger"),
-                            ui.br(), ui.br(),
-                            ui.h5("User Roles"),
-                            ui.output_ui("user_roles_display"),
-                            ui.input_selectize("assign_role_to_user", "Assign Role:", choices={}, selected=None),
-                            ui.input_action_button("assign_role", "Assign Role", class_="btn btn-info"),
-                            ui.input_action_button("remove_user_role", "Remove Role", class_="btn btn-warning")
-                        )
-                    )
+                    class_="enhanced-card table-enhanced"
                 )
             ),
-            ui.hr(),
+            
             # Role Management Section  
             ui.div(
-                ui.h2("Role Management"),
-                ui.row(
-                    ui.column(8,
-                        ui.output_data_frame("roles_table_display")
+                ui.div(
+                    ui.h3("🛡️ Role Management", class_="card-header", style="margin: 0; padding: 1.5rem;"),
+                    ui.div(
+                        ui.row(
+                            ui.column(8,
+                                ui.output_data_frame("roles_table_display")
+                            ),
+                            ui.column(4,
+                                ui.div(
+                                    ui.div(
+                                        ui.h5("Role Details", style="color: var(--dark-text); margin-bottom: 1rem;"),
+                                        ui.input_selectize("selected_role", "Select Role:", choices={}, selected=None),
+                                        ui.input_text("role_name", "Role Name:", placeholder="Enter role name"),
+                                        ui.input_text_area("role_description", "Description:", placeholder="Enter role description"),
+                                        ui.input_checkbox("role_is_active", "Active Role", value=True),
+                                        style="margin-bottom: 1.5rem;"
+                                    ),
+                                    ui.div(
+                                        ui.h6("Role Operations", style="color: var(--dark-text); margin-bottom: 1rem;"),
+                                        ui.input_action_button("add_new_role", "➕ Add Role", 
+                                                              class_="btn btn-success btn-enhanced",
+                                                              style="width: 100%; margin-bottom: 0.5rem;"),
+                                        ui.input_action_button("update_role", "✏️ Update Role", 
+                                                              class_="btn btn-primary btn-enhanced",
+                                                              style="width: 100%; margin-bottom: 0.5rem;"),
+                                        ui.input_action_button("delete_role", "🗑️ Delete Role", 
+                                                              class_="btn btn-danger btn-enhanced",
+                                                              style="width: 100%; margin-bottom: 1rem;")
+                                    ),
+                                    ui.div(
+                                        ui.h6("Permission Assignment", style="color: var(--dark-text); margin-bottom: 1rem;"),
+                                        ui.output_ui("role_permissions_display"),
+                                        ui.input_selectize("assign_permission_to_role", "Assign Permission:", choices={}, selected=None),
+                                        ui.input_action_button("assign_permission", "🔗 Assign Permission", 
+                                                              class_="btn btn-info btn-enhanced",
+                                                              style="width: 100%; margin-bottom: 0.5rem;"),
+                                        ui.input_action_button("remove_role_permission", "🔓 Remove Permission", 
+                                                              class_="btn btn-warning btn-enhanced",
+                                                              style="width: 100%;")
+                                    ),
+                                    class_="enhanced-form"
+                                )
+                            )
+                        ),
+                        class_="card-body"
                     ),
-                    ui.column(4,
-                        ui.div(
-                            ui.h4("Role Details"),
-                            ui.input_selectize("selected_role", "Select Role:", choices={}, selected=None),
-                            ui.input_text("role_name", "Role Name:", placeholder="Enter role name"),
-                            ui.input_text_area("role_description", "Description:", placeholder="Enter role description"),
-                            ui.input_checkbox("role_is_active", "Active Role", value=True),
-                            ui.br(),
-                            ui.input_action_button("add_new_role", "Add New Role", class_="btn btn-success"),
-                            ui.input_action_button("update_role", "Update Role", class_="btn btn-primary"),
-                            ui.input_action_button("delete_role", "Delete Role", class_="btn btn-danger"),
-                            ui.br(), ui.br(),
-                            ui.h5("Role Permissions"),
-                            ui.output_ui("role_permissions_display"),
-                            ui.input_selectize("assign_permission_to_role", "Assign Permission:", choices={}, selected=None),
-                            ui.input_action_button("assign_permission", "Assign Permission", class_="btn btn-info"),
-                            ui.input_action_button("remove_role_permission", "Remove Permission", class_="btn btn-warning")
-                        )
-                    )
+                    class_="enhanced-card table-enhanced"
                 )
             ),
-            ui.hr(),
+            
             # Permission Management Section
             ui.div(
-                ui.h2("Permission Management"),
-                ui.row(
-                    ui.column(8,
-                        ui.output_data_frame("permissions_table_display")
+                ui.div(
+                    ui.h3("🔐 Permission Management", class_="card-header", style="margin: 0; padding: 1.5rem;"),
+                    ui.div(
+                        ui.row(
+                            ui.column(8,
+                                ui.output_data_frame("permissions_table_display")
+                            ),
+                            ui.column(4,
+                                ui.div(
+                                    ui.div(
+                                        ui.h5("Permission Details", style="color: var(--dark-text); margin-bottom: 1rem;"),
+                                        ui.input_selectize("selected_permission", "Select Permission:", choices={}, selected=None),
+                                        ui.input_text("permission_name", "Permission Name:", placeholder="Enter permission name"),
+                                        ui.input_text_area("permission_description", "Description:", placeholder="Enter permission description"),
+                                        ui.input_checkbox("permission_is_active", "Active Permission", value=True),
+                                        style="margin-bottom: 1.5rem;"
+                                    ),
+                                    ui.div(
+                                        ui.h6("Permission Operations", style="color: var(--dark-text); margin-bottom: 1rem;"),
+                                        ui.input_action_button("add_new_permission", "➕ Add Permission", 
+                                                              class_="btn btn-success btn-enhanced",
+                                                              style="width: 100%; margin-bottom: 0.5rem;"),
+                                        ui.input_action_button("update_permission", "✏️ Update Permission", 
+                                                              class_="btn btn-primary btn-enhanced",
+                                                              style="width: 100%; margin-bottom: 0.5rem;"),
+                                        ui.input_action_button("delete_permission", "🗑️ Delete Permission", 
+                                                              class_="btn btn-danger btn-enhanced",
+                                                              style="width: 100%;")
+                                    ),
+                                    class_="enhanced-form"
+                                )
+                            )
+                        ),
+                        class_="card-body"
                     ),
-                    ui.column(4,
-                        ui.div(
-                            ui.h4("Permission Details"),
-                            ui.input_selectize("selected_permission", "Select Permission:", choices={}, selected=None),
-                            ui.input_text("permission_name", "Permission Name:", placeholder="Enter permission name"),
-                            ui.input_text_area("permission_description", "Description:", placeholder="Enter permission description"),
-                            ui.input_checkbox("permission_is_active", "Active Permission", value=True),
-                            ui.br(),
-                            ui.input_action_button("add_new_permission", "Add New Permission", class_="btn btn-success"),
-                            ui.input_action_button("update_permission", "Update Permission", class_="btn btn-primary"),
-                            ui.input_action_button("delete_permission", "Delete Permission", class_="btn btn-danger")
-                        )
-                    )
+                    class_="enhanced-card table-enhanced"
                 )
             ),
-            ui.hr(),
-            # System Status & SQL Console
+            
+            # System Administration & SQL Console
             ui.div(
-                ui.h3("System Administration"),
-                ui.output_text("user_admin_status_display"),
-                ui.br(),
-                ui.h4("SQL Console (Read-Only)"),
-                ui.input_text("sql_query", "SQL Query:", placeholder="Enter read-only SQL query (SELECT, SHOW, DESCRIBE, EXPLAIN)..."),
-                ui.input_action_button("execute_query", "Execute", class_="btn btn-secondary"),
-                ui.output_text("query_error_display"),
-                ui.output_data_frame("query_results")
-            )
+                ui.div(
+                    ui.h3("⚙️ System Administration", class_="card-header", style="margin: 0; padding: 1.5rem;"),
+                    ui.div(
+                        ui.div(
+                            ui.output_text("user_admin_status_display"),
+                            style="margin-bottom: 1.5rem;"
+                        ),
+                        ui.div(
+                            ui.h5("🔍 SQL Console (Read-Only)", style="color: var(--dark-text); margin-bottom: 1rem;"),
+                            ui.input_text("sql_query", "SQL Query:", placeholder="Enter read-only SQL query (SELECT, SHOW, DESCRIBE, EXPLAIN)..."),
+                            ui.div(
+                                ui.input_action_button("execute_query", "▶️ Execute Query", 
+                                                      class_="btn btn-info btn-enhanced",
+                                                      style="margin-top: 0.5rem;"),
+                                ui.output_text("query_error_display"),
+                                style="margin-top: 1rem;"
+                            )
+                        ),
+                        ui.div(
+                            ui.output_data_frame("query_results"),
+                            style="margin-top: 1rem;"
+                        ),
+                        class_="card-body"
+                    ),
+                    class_="enhanced-card"
+                )
+            ),
+            
+            style="max-width: 1600px; margin: 0 auto; padding: 2rem;"
         )
     ),
     title="BPMS - Shiny Version",
