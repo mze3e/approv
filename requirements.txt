@@ -1,3 +1,12 @@
 PyYAML
 duckdb
 streamlit_agraph
+streamlit
+pandas
+SpiffWorkflow
+duckdb
+pandas
+PyYAML
+SpiffWorkflow
+streamlit
+streamlit_agraph
