@@ -4,6 +4,7 @@ pandas
 SpiffWorkflow
 shiny
 htmltools
+postal
 # Legacy Streamlit dependencies (keeping for transition period)
 streamlit
 streamlit_agraph
