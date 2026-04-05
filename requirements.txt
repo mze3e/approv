@@ -1,9 +1,20 @@
+# Core
 PyYAML
-duckdb
 pandas
-SpiffWorkflow
-shiny
-htmltools
-# Legacy Streamlit dependencies (keeping for transition period)
+
+# API
+fastapi
+uvicorn[standard]
+python-jose[cryptography]
+passlib[bcrypt]
+httpx
+
+# Client
 streamlit
-streamlit_agraph
+requests
+
+# Optional: S3 backups
+boto3
+
+# Optional: SMS notifications (Twilio)
+# twilio
