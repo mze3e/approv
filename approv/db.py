@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 import yaml
-from passlib.hash import bcrypt
+import bcrypt
 
 logger = logging.getLogger(__name__)
 
@@ -283,7 +283,7 @@ def _seed_data(conn: sqlite3.Connection, config_dir: str):
     user_map = {}  # username -> user_id
     for username, user_data in data.get("User", {}).items():
         # Default password is lowercase username
-        password_hash = bcrypt.hash(username.lower())
+        password_hash = bcrypt.hashpw(username.lower().encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
         conn.execute(
             "INSERT OR IGNORE INTO users (username, email, phone, password_hash) VALUES (?, ?, ?, ?)",
             (username, user_data.get("email", ""), user_data.get("phone", ""), password_hash),
