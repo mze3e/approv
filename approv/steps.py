@@ -7,6 +7,8 @@ Each step class follows the contract:
         Returns (next_status, description)
 """
 
+from __future__ import annotations
+
 import logging
 
 logger = logging.getLogger(__name__)

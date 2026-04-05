@@ -5,6 +5,8 @@ Produces a FormSpec JSON structure from YAML config, form data, and user roles.
 Zero Streamlit imports - this is a pure data transformation.
 """
 
+from __future__ import annotations
+
 import yaml
 from datetime import date, datetime, time
 

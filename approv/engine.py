@@ -4,6 +4,8 @@ Workflow engine - decoupled from any UI framework.
 Manages workflow state machine execution, audit trail, and permission checking.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from datetime import datetime

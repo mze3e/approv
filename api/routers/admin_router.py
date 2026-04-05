@@ -1,5 +1,7 @@
 """Admin endpoints: workflow definitions, user/role CRUD, DB backup/export/import."""
 
+from __future__ import annotations
+
 import json
 import os
 

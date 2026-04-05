@@ -1,5 +1,7 @@
 """Workflow instance endpoints."""
 
+from __future__ import annotations
+
 import json
 
 import yaml
