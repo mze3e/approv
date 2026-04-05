@@ -1,5 +1,7 @@
 """Form specification endpoint - the key thin-client endpoint."""
 
+from __future__ import annotations
+
 import json
 import os
 

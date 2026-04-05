@@ -3,6 +3,8 @@ Generic form renderer: takes a FormSpec JSON from the API and renders Streamlit 
 This module has zero knowledge of workflow logic - it just renders what the API tells it.
 """
 
+from __future__ import annotations
+
 import streamlit as st
 from datetime import datetime, date, time
 

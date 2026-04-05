@@ -1,5 +1,7 @@
 """Task views - pending items and workflow history."""
 
+from __future__ import annotations
+
 from fastapi import APIRouter, Depends, Query
 
 from api.dependencies import get_current_user, get_db

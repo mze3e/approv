@@ -1,5 +1,7 @@
 """Authentication endpoints."""
 
+from __future__ import annotations
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from api.auth import create_access_token, verify_password
